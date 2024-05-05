@@ -1,6 +1,6 @@
-module github.com/pqabelian/abel-sdk-go-demo
+module github.com/pqabelian/abelian-sdk-go-demo
 
-go 1.19
+go 1.18
 
 require abelian.info/sdk/core v0.0.0-00010101000000-000000000000
 
@@ -23,4 +23,4 @@ replace github.com/abesuite/abeutil => github.com/pqabelian/abeutil v0.0.0-20231
 
 replace github.com/cryptosuite/pqringct => github.com/pqabelian/pqringct v0.0.0-20231107022351-feb587470e43
 
-replace abelian.info/sdk/core => github.com/pqabelian/abel-sdk-go v0.0.0-20240306022326-19454e0afa43
+replace abelian.info/sdk/core => github.com/pqabelian/abelian-sdk-go v0.0.0-20240505051539-2230e264d8d8
