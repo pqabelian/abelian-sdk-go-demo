@@ -6,13 +6,13 @@
 
 This is a demo application of the Abelian Go SDK. It demonstrates how to use the Abelian Go SDK to implement common blockchain operations such as generating addresses, tracking coins, and making transactions.
 
-### 1. Install dependencies
+## 1. Install dependencies
 
-## 1.1. Install Go
+### 1.1. Install Go
 
 Go version 1.11 or higher is required. Please refer to [the official Go installation guide](https://go.dev/doc/install) for details.
 
-## 1.2. Install build tools
+### 1.2. Install build tools
 
 For Linux:
 
