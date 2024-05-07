@@ -23,7 +23,7 @@ sudo apt install astyle cmake gcc ninja-build  pkg-config libssl-dev python3-pyt
 For macOS:
 
 ```shell
- brew install cmake ninja openssl@1.1 wget doxygen graphviz astyle pkg-config && pip3 install pytest pytest-xdist pyyaml
+brew install cmake ninja openssl@1.1 wget doxygen graphviz astyle pkg-config && pip3 install pytest pytest-xdist pyyaml
 ```
 
 ## 2. Build the demo application
@@ -46,6 +46,8 @@ To clean the build:
 ```shell
 make clean
 ```
+
+Note that In the building process, the OpenSSL library is linked statically on macOS and dynamically on Linux. Therefore, to run the compiled binaries on another machine, it is required to have the OpenSSL library installed on Linux while it is not required on macOS.
 
 ## 3. Run the demo application
 
