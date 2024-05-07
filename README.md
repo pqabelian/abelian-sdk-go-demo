@@ -47,7 +47,7 @@ To clean the build:
 make clean
 ```
 
-Note that In the building process, the OpenSSL library is linked statically on macOS and dynamically on Linux. Therefore, to run the compiled binaries on another machine, it is required to have the OpenSSL library installed on Linux while it is not required on macOS.
+Note that in the building process, the OpenSSL library is linked statically on macOS and dynamically on Linux. Therefore, to run the compiled binaries on another machine, it is required to have the OpenSSL library installed on Linux while it is not required on macOS.
 
 ## 3. Run the demo application
 
@@ -122,3 +122,23 @@ chainID: 2
 📀 DemoALOHA ends.
 ================================================================================
 ```
+
+## 4. Miscellaneous
+
+### 4.1. Build for old x64 processors
+
+The default build of liboqs for x64 processors requires some instruction sets that are not available on older processors.
+
+To build any application using liboqs for older x64 processors, we need to slightly change the compiler options of liboqs. Specifically, in `liboqs/.CMake/compiler_opts.cmake`, we need to change the following line
+
+```cmake
+set(OQS_OPT_FLAG "-march=native")
+```
+
+to
+
+```cmake
+set(OQS_OPT_FLAG "-march=x86-64")
+```
+
+Then, rebuild the liboqs library and the application.
