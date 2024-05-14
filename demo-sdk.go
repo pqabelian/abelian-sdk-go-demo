@@ -94,6 +94,39 @@ func (ds *DemoSet) DemoSDKGetBlockOrTx(args []string) {
 	}
 }
 
+func (ds *DemoSet) DemoSDKGetMemoInTx(args []string) {
+	// Parse demo args.
+	if len(args) != 1 {
+		args = []string{"-h"}
+	}
+	flag := flag.NewFlagSet("SDKGetMemoInTx", flag.ContinueOnError)
+	flag.Usage = func() {
+		fmt.Printf("Usage: %s <transaction-hash>\n", flag.Name())
+	}
+	ds.demoExitOnError(flag.Parse(args))
+
+	txHash := flag.Arg(0)
+	if strings.HasPrefix(txHash, "0x") {
+		txHash = txHash[2:]
+	}
+
+	// Create RPC client.
+	client := ds.getDemoAbecRPCClient()
+
+	ds.demoCase("Get transaction with hash 0x%v.", txHash)
+	_, tx, err := client.GetRawTx(txHash)
+	if err == nil {
+		txMemo, err := hex.DecodeString(tx.Memo)
+		ds.demoCheck(err)
+		fmt.Printf("Memo with binary:%b\n", txMemo)
+		fmt.Printf("Memo with byte:%v\n", txMemo)
+		fmt.Printf("Memo with raw string:%s\n", txMemo)
+	} else {
+		fmt.Printf("Failed to get transaction: %v\n", err)
+	}
+
+}
+
 func (ds *DemoSet) DemoSDKGenerateCryptoKeysAndAddress(args []string) {
 	doTask := func(cryptoSeed core.Bytes) {
 		fmt.Printf("CryptoSeed: %v\n", cryptoSeed)
@@ -494,7 +527,7 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
 	defaultOutputFile := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.outputFile")
 
 	// Parse demo args.
-	flag := flag.NewFlagSet("SDKMakeUnsignedRawTx", flag.ContinueOnError)
+	flag := flag.NewFlagSet("SDKMakeUnsignedRawTxWithMemo", flag.ContinueOnError)
 	scanHeightRangeArg := flag.String("txosHeightRange", defaultScanHeightRange, "Range of block heights to scan coins.")
 	sendersArg := flag.String("senders", defaultSenders, "Seqnos of the sender accounts.")
 	receiversArg := flag.String("receivers", defaultReceivers, "Seqnos of the receiver accounts.")
