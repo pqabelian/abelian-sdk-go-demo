@@ -23,4 +23,4 @@ replace github.com/abesuite/abeutil => github.com/pqabelian/abeutil v0.0.0-20231
 
 replace github.com/cryptosuite/pqringct => github.com/pqabelian/pqringct v0.0.0-20231107022351-feb587470e43
 
-replace abelian.info/sdk/core => github.com/pqabelian/abelian-sdk-go v0.0.0-20240505051539-2230e264d8d8
+replace abelian.info/sdk/core => github.com/pqabelian/abelian-sdk-go v0.0.0-20240515080807-1209195ee9b6
