@@ -15,6 +15,8 @@ github.com/pqabelian/abelian-sdk-go v0.0.0-20240505051539-2230e264d8d8 h1:ruperr
 github.com/pqabelian/abelian-sdk-go v0.0.0-20240505051539-2230e264d8d8/go.mod h1:1UMxWRK3wyd4jEJyfJsYYhn8MzESCyFJ94lRObZOdP8=
 github.com/pqabelian/abelian-sdk-go v0.0.0-20240515080807-1209195ee9b6 h1:ry9WEzyf/U+WXQW7SW2NbHf4LBkeoOYyMlkEhrqG98w=
 github.com/pqabelian/abelian-sdk-go v0.0.0-20240515080807-1209195ee9b6/go.mod h1:1UMxWRK3wyd4jEJyfJsYYhn8MzESCyFJ94lRObZOdP8=
+github.com/pqabelian/abelian-sdk-go v0.0.0-20240515144424-4f07ed06a35e h1:QWOGqTBYHjPWkn8ONenvyiYPd+zmgdklDD/gu9aTqdA=
+github.com/pqabelian/abelian-sdk-go v0.0.0-20240515144424-4f07ed06a35e/go.mod h1:1UMxWRK3wyd4jEJyfJsYYhn8MzESCyFJ94lRObZOdP8=
 github.com/pqabelian/abeutil v0.0.0-20231107022913-d6d3bf295938 h1:zONjJzpgNvAqNFzFQjL6nhSaclegMdFLFLMwrImwxNM=
 github.com/pqabelian/abeutil v0.0.0-20231107022913-d6d3bf295938/go.mod h1:kZhOujT1b8QyruSMsG1gAlFmoWBU4lqsbC5j9+FrKxQ=
 github.com/pqabelian/pqringct v0.0.0-20231107022351-feb587470e43 h1:G2jh3ZXjPw9rkzNoyPknv35bgOMHy0V/fR+10lorXCI=
