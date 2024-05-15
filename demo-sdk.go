@@ -94,6 +94,39 @@ func (ds *DemoSet) DemoSDKGetBlockOrTx(args []string) {
 	}
 }
 
+func (ds *DemoSet) DemoSDKGetMemoInTx(args []string) {
+	// Parse demo args.
+	if len(args) != 1 {
+		args = []string{"-h"}
+	}
+	flag := flag.NewFlagSet("SDKGetMemoInTx", flag.ContinueOnError)
+	flag.Usage = func() {
+		fmt.Printf("Usage: %s <transaction-hash>\n", flag.Name())
+	}
+	ds.demoExitOnError(flag.Parse(args))
+
+	txHash := flag.Arg(0)
+	if strings.HasPrefix(txHash, "0x") {
+		txHash = txHash[2:]
+	}
+
+	// Create RPC client.
+	client := ds.getDemoAbecRPCClient()
+
+	ds.demoCase("Get transaction with hash 0x%v.", txHash)
+	_, tx, err := client.GetRawTx(txHash)
+	if err == nil {
+		txMemo, err := hex.DecodeString(tx.Memo)
+		ds.demoCheck(err)
+		fmt.Printf("Memo with binary:%b\n", txMemo)
+		fmt.Printf("Memo with byte:%v\n", txMemo)
+		fmt.Printf("Memo with raw string:%s\n", txMemo)
+	} else {
+		fmt.Printf("Failed to get transaction: %v\n", err)
+	}
+
+}
+
 func (ds *DemoSet) DemoSDKGenerateCryptoKeysAndAddress(args []string) {
 	doTask := func(cryptoSeed core.Bytes) {
 		fmt.Printf("CryptoSeed: %v\n", cryptoSeed)
@@ -479,6 +512,180 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTx(args []string) {
 
 	ds.demoCase("Generate an UnsignedRawTx and write it to output file.")
 	txDesc := core.NewTxDesc(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks)
+	unsignedRawTx, err := core.GenerateUnsignedRawTx(txDesc)
+	ds.demoCheck(err)
+	err = os.WriteFile(outputPath, unsignedRawTx.Bytes, 0644)
+	ds.demoCheck(err)
+	fmt.Printf("UnsignedRawTx written to file: %v\n", outputPath)
+}
+
+func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
+	// Load default args from demo config.
+	defaultScanHeightRange := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.scanHeightRange")
+	defaultSenders := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.senders")
+	defaultReceivers := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.receivers")
+	defaultOutputFile := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.outputFile")
+	defaultMemo := ""
+
+	// Parse demo args.
+	flag := flag.NewFlagSet("SDKMakeUnsignedRawTxWithMemo", flag.ContinueOnError)
+	scanHeightRangeArg := flag.String("txosHeightRange", defaultScanHeightRange, "Range of block heights to scan coins.")
+	sendersArg := flag.String("senders", defaultSenders, "Seqnos of the sender accounts.")
+	receiversArg := flag.String("receivers", defaultReceivers, "Seqnos of the receiver accounts.")
+	outputFileArg := flag.String("outputFile", defaultOutputFile, "Output file name.")
+	memoArg := flag.String("memo", defaultMemo, "write memo into transaction")
+	ds.demoExitOnError(flag.Parse(args))
+
+	// Create RPC client and get demo accounts.
+	client := ds.getDemoAbecRPCClient()
+	demoAccounts := ds.getDemoAccounts()
+
+	ds.demoCase("Process demo args.")
+	// Check block range.
+	scanHeightRange := strings.Split(*scanHeightRangeArg, ",")
+	scanHeightBegin := int64(atoi(scanHeightRange[0]))
+	scanHeightEnd := int64(atoi(scanHeightRange[1]))
+	fmt.Printf("block range to scan coins: [%v, %v]\n", scanHeightBegin, scanHeightEnd)
+	if scanHeightBegin > scanHeightEnd || scanHeightBegin < 0 {
+		ds.demoExitOnError(fmt.Errorf("invalid block range: [%v, %v]", scanHeightBegin, scanHeightEnd))
+	}
+	// Load sender accounts.
+	fmt.Printf("sender seqnos: %v\n", *sendersArg)
+	senderSeqnos := strings.Split(*sendersArg, ",")
+	senderAccounts := make([]*DemoAccount, len(senderSeqnos))
+	for i, seqno := range senderSeqnos {
+		senderAccounts[i] = demoAccounts[atoi(seqno)]
+		fmt.Printf("  sender account %v (seqno=%v): %v\n", i, seqno, senderAccounts[i].ShortAbelAddress)
+	}
+	// Load receiver accounts.
+	fmt.Printf("receiver seqnos: %v\n", *receiversArg)
+	receiverSeqnos := strings.Split(*receiversArg, ",")
+	receiverAccounts := make([]*DemoAccount, len(receiverSeqnos))
+	for i, seqno := range receiverSeqnos {
+		receiverAccounts[i] = demoAccounts[atoi(seqno)]
+		fmt.Printf("  receiver account %v (seqno=%v): %v\n", i, seqno, receiverAccounts[i].ShortAbelAddress)
+	}
+	// Check output file.
+	outputPath := ds.getDemoFilePath(*outputFileArg)
+	fmt.Printf("output file: %v\n", outputPath)
+	if _, err := os.Stat(outputPath); err == nil {
+		ds.demoExitOnError(fmt.Errorf("output file %v already exists", outputPath))
+	}
+
+	ds.demoCase("Find all coins in the block range owned by sender accounts.")
+	senderTxInDescs := make([][]*core.TxInDesc, len(senderAccounts))
+	for height := scanHeightBegin; height <= scanHeightEnd; height++ {
+		_, blockHash, err := client.GetBlockHash(height)
+		ds.demoCheck(err)
+		_, block, err := client.GetBlock(*blockHash)
+		ds.demoCheck(err)
+		fmt.Printf("Searching block %v (hash=%v)...\n", height, *blockHash)
+		for _, txHash := range block.TxHashes {
+			_, tx, err := client.GetRawTx(txHash)
+			ds.demoCheck(err)
+
+			for txIndex, vout := range tx.Vout {
+				voutData := core.MakeBytesFromHexString(vout.Script)
+				coinAddress, err := core.DecodeCoinAddressFromTxOutData(voutData)
+				ds.demoCheck(err)
+
+				for i, senderAccount := range senderAccounts {
+					if bytes.Equal(coinAddress.Fingerprint(), senderAccount.Fingerprint) {
+						txoValue, err := core.DecodeValueFromTxOutData(voutData, senderAccount.ViewSecretKey)
+						ds.demoCheck(err)
+						fmt.Printf("  🔥 Found coin owned by sender %v: %v ABEL\n", i, core.NeutrinoToAbel(txoValue))
+						txoDesc := &core.TxInDesc{
+							TxOutData:  voutData,
+							CoinValue:  txoValue,
+							Owner:      senderAccount.ShortAbelAddress,
+							Height:     height,
+							TxHash:     core.MakeBytesFromHexString(txHash),
+							TxOutIndex: uint8(txIndex),
+						}
+						senderTxInDescs[i] = append(senderTxInDescs[i], txoDesc)
+					}
+				}
+			}
+		}
+	}
+	fmt.Printf("Coins found:\n")
+	for i, txInDescs := range senderTxInDescs {
+		fmt.Printf("  sender %v: %d coins\n", i, len(txInDescs))
+	}
+
+	ds.demoCase("Pick a random coin to spend for each sender account.")
+	txInDescsToSpend := make([]*core.TxInDesc, 0, len(senderAccounts))
+	rand.Seed(time.Now().UnixNano())
+	for _, txInDescs := range senderTxInDescs {
+		if len(txInDescs) == 0 {
+			continue
+		}
+		randIndex := rand.Intn(len(txInDescs))
+		txInDescsToSpend = append(txInDescsToSpend, txInDescs[randIndex])
+	}
+	if len(txInDescsToSpend) == 0 {
+		ds.demoExitOnError(fmt.Errorf("failed to find any coin to spend"))
+	}
+	fmt.Printf("TxInDescs:\n")
+	for i, txInDescs := range txInDescsToSpend {
+		fmt.Printf("  txInDesc[%v]: height: %d, value: %v ABEL, sender: %v, outpoint: (%s,%d)\n",
+			i, txInDescs.Height, core.NeutrinoToAbel(txInDescs.CoinValue), txInDescs.Owner, txInDescs.TxHash, txInDescs.TxOutIndex)
+	}
+
+	ds.demoCase("Get estimated TxFee.")
+	estimatedTxFee := client.GetEstimatedTxFee()
+	fmt.Printf("TxFee: %v ABEL\n", core.NeutrinoToAbel(estimatedTxFee))
+
+	ds.demoCase("Calculate TxOutDescs for all receivers.")
+	// Calculate the value to spend by deducting TxFee from the total value in Txos.
+	totalCoinValue := int64(0)
+	for _, txInDesc := range txInDescsToSpend {
+		totalCoinValue += txInDesc.CoinValue
+	}
+	spendableCoinValue := totalCoinValue - estimatedTxFee
+	// Transfer all the value in sender Txos to the receivers, distribute the total value evenly.
+	coinValuePerReceiver := spendableCoinValue / int64(len(receiverAccounts))
+	// Create TxOutDescs for all receivers.
+	txOutDescs := make([]*core.TxOutDesc, len(receiverAccounts))
+	for i, receiverAccount := range receiverAccounts {
+		txOutDescs[i] = &core.TxOutDesc{
+			AbelAddress: receiverAccount.AbelAddress,
+			CoinValue:   coinValuePerReceiver,
+		}
+		if i == len(receiverAccounts)-1 {
+			// The last receiver gets the remaining value.
+			txOutDescs[i].CoinValue += spendableCoinValue % int64(len(receiverAccounts))
+		}
+	}
+	fmt.Printf("TxOutDescs:\n")
+	for i, txOutDesc := range txOutDescs {
+		fmt.Printf("  txOutDesc[%v]: value: %v ABEL, receiver: %v\n",
+			i, core.NeutrinoToAbel(txOutDesc.CoinValue), txOutDesc.AbelAddress.GetShortAbelAddress())
+	}
+
+	ds.demoCase("Get ring blocks for all TxInDescs.")
+	allRingBlockHeights := make([]int64, 0, len(txInDescsToSpend)*3)
+	for _, txInDesc := range txInDescsToSpend {
+		ringBlockHeights := core.GetRingBlockHeights(txInDesc.Height)
+		for _, ringBlockHeight := range ringBlockHeights {
+			if !contains(allRingBlockHeights, ringBlockHeight) {
+				allRingBlockHeights = append(allRingBlockHeights, ringBlockHeight)
+			}
+		}
+	}
+	fmt.Printf("Ring block heights: %v\n", allRingBlockHeights)
+	allRingBlocks := make(map[int64]*core.TxBlockDesc)
+	for _, ringBlockHeight := range allRingBlockHeights {
+		ringBlockBytes, err := client.GetBlockBytesByHeight(ringBlockHeight)
+		ds.demoCheck(err)
+		ringBlock := core.NewTxBlockDesc(ringBlockBytes, ringBlockHeight)
+		allRingBlocks[ringBlockHeight] = ringBlock
+		fmt.Printf("  ring block %d: %v\n", ringBlock.Height, ringBlock.BinData)
+	}
+
+	ds.demoCase("Generate an UnsignedRawTx and write it to output file.")
+	txDesc, err := core.NewTxDescWithOptions(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks, core.SetMemo([]byte(*memoArg)))
+	ds.demoCheck(err)
 	unsignedRawTx, err := core.GenerateUnsignedRawTx(txDesc)
 	ds.demoCheck(err)
 	err = os.WriteFile(outputPath, unsignedRawTx.Bytes, 0644)
