@@ -684,8 +684,7 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
 	}
 
 	ds.demoCase("Generate an UnsignedRawTx and write it to output file.")
-	txDesc, err := core.NewTxDescWithOptions(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks, core.SetMemo([]byte(*memoArg)))
-	ds.demoCheck(err)
+	txDesc := core.NewTxDescWithMemo(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks, core.MakeBytesFromHexString(*memoArg))
 	unsignedRawTx, err := core.GenerateUnsignedRawTx(txDesc)
 	ds.demoCheck(err)
 	err = os.WriteFile(outputPath, unsignedRawTx.Bytes, 0644)
