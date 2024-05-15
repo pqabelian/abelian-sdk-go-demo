@@ -525,6 +525,7 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
 	defaultSenders := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.senders")
 	defaultReceivers := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.receivers")
 	defaultOutputFile := ds.getDemoConfigStringValue("SDKMakeUnsignedRawTx.outputFile")
+	defaultMemo := ""
 
 	// Parse demo args.
 	flag := flag.NewFlagSet("SDKMakeUnsignedRawTxWithMemo", flag.ContinueOnError)
@@ -532,6 +533,7 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
 	sendersArg := flag.String("senders", defaultSenders, "Seqnos of the sender accounts.")
 	receiversArg := flag.String("receivers", defaultReceivers, "Seqnos of the receiver accounts.")
 	outputFileArg := flag.String("outputFile", defaultOutputFile, "Output file name.")
+	memoArg := flag.String("memo", defaultMemo, "write memo into transaction")
 	ds.demoExitOnError(flag.Parse(args))
 
 	// Create RPC client and get demo accounts.
@@ -682,7 +684,7 @@ func (ds *DemoSet) DemoSDKMakeUnsignedRawTxWithMemo(args []string) {
 	}
 
 	ds.demoCase("Generate an UnsignedRawTx and write it to output file.")
-	txDesc, err := core.NewTxDescWithOptions(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks, core.SetMemo([]byte("memo")))
+	txDesc, err := core.NewTxDescWithOptions(txInDescsToSpend, txOutDescs, estimatedTxFee, allRingBlocks, core.SetMemo([]byte(*memoArg)))
 	ds.demoCheck(err)
 	unsignedRawTx, err := core.GenerateUnsignedRawTx(txDesc)
 	ds.demoCheck(err)
