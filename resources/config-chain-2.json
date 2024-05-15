@@ -1,8 +1,8 @@
 {
   "chainID": "2",
-  "abec.rpc.endpoint": "https://testnet-rpc-exchange.abelian.info",
-  "abec.rpc.username": "KFf5krbZiLyfo5KaIsNb3Fr2QZs=",
-  "abec.rpc.password": "M+DxFwon2FYyiLgaJoTZ9qCr6Jc=",
+  "abec.rpc.endpoint": "https://testnet-rpc-00.abelian.info",
+  "abec.rpc.username": "J8y0OnkS2wx9XEgUlW5MqtoRDAQ=",
+  "abec.rpc.password": "ULlXc/ZMJ375cn6VuSbtU+Y3KGQ=",
 
   "SDKTrackCoins.accounts": "0,1,2,3,4,5,6,7,8,9",
   "SDKTrackCoins.scanHeightRange": "5115,5120",
