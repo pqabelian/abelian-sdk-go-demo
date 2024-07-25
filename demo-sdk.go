@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -15,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	core "abelian.info/sdk/core"
+	core "github.com/pqabelian/abelian-sdk-go"
 )
 
 func (ds *DemoSet) DemoSDKGetChainInfo(args []string) {
@@ -177,6 +178,9 @@ func (ds *DemoSet) DemoSDKGenerateAddresses(args []string) {
 		abelAddress := core.NewAbelAddressFromCryptoAddress(&cryptoAddress, int8(*chainID))
 		fmt.Printf("AbelAddress: %v\n", abelAddress)
 
+		err = abelAddress.Validate()
+		ds.demoCheck(err)
+
 		shortAbelAddress := abelAddress.GetShortAbelAddress()
 		fmt.Printf("ShortAbelAddress: %v\n", shortAbelAddress)
 	}
@@ -240,13 +244,27 @@ func (ds *DemoSet) DemoSDKTrackCoins(args []string) {
 
 			for txIndex, vout := range tx.Vout {
 				voutData := core.MakeBytesFromHexString(vout.Script)
-				coinAddress, err := core.DecodeCoinAddressFromTxOutData(voutData)
+				coinAddress, err := core.DecodeCoinAddressFromSerializedTxOutData(uint32(tx.Version), voutData)
 				ds.demoCheck(err)
+
+				if coinAddress.PrivacyLevel() == core.PRIVACY_LEVEL_FULL_PRIVACY_PRE {
+					coinAddressBefore, err := core.DecodeCoinAddressFromTxOutData(voutData)
+					ds.demoCheck(err)
+					if coinAddress.Data().HexString() != coinAddressBefore.Data().HexString() {
+						ds.demoCheck(errors.New("incompatible"))
+					}
+				}
 
 				for i, trackedAccount := range trackedAccounts {
 					if bytes.Equal(coinAddress.Fingerprint(), trackedAccount.Fingerprint) {
-						txoValue, err := core.DecodeValueFromTxOutData(voutData, trackedAccount.ViewSecretKey)
+						txoValue, err := core.DecodeValueFromTxOutDataByKeys(voutData, trackedAccount.CryptoAddress, trackedAccount.ViewSecretKey)
 						ds.demoCheck(err)
+						txoValueBefore, err := core.DecodeValueFromTxOutData(voutData, trackedAccount.ViewSecretKey)
+						ds.demoCheck(err)
+						if txoValue != txoValueBefore {
+							ds.demoCheck(errors.New("incompatible"))
+						}
+
 						fmt.Printf("  🔥 Found coin for tracked account %v: %v ABEL\n", i, core.NeutrinoToAbel(txoValue))
 						coin := &core.Coin{
 							ID:                core.CoinID{TxHash: core.MakeBytesFromHexString(txHash), Index: uint8(txIndex)},
@@ -318,7 +336,7 @@ func (ds *DemoSet) DemoSDKTrackCoins(args []string) {
 	// Print result.
 	fmt.Printf("Coin serial numbers calculated:\n")
 	for i, coin := range allCoins {
-		fmt.Printf("  coin %d: %v\n", i, coin.SerialNumber)
+		fmt.Printf("  coin %d: id %v, amount %d ,serial number %v\n", i, coin.ID, coin.Value, coin.SerialNumber.HexString())
 	}
 
 	ds.demoCase("Track if the above coins were spent in blocks %d to %d.", trackHeightBegin, trackHeightEnd)
