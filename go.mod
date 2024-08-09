@@ -2,7 +2,7 @@ module github.com/pqabelian/abelian-sdk-go-demo
 
 go 1.20
 
-require github.com/pqabelian/abelian-sdk-go v0.0.0-20240728163151-80881e84832a
+require github.com/pqabelian/abelian-sdk-go v0.0.0-20240809150220-8dcbf4c49f74
 
 require (
 	github.com/cryptosuite/kyber-go v0.0.2-alpha // indirect
