@@ -19,7 +19,7 @@ import (
 	"strings"
 	"unsafe"
 
-	core "abelian.info/sdk/core"
+	core "github.com/pqabelian/abelian-sdk-go"
 )
 
 // Define util functions.
@@ -94,7 +94,7 @@ type DemoAccount struct {
 	SerialNoSecretKey *core.CryptoKey
 	ViewSecretKey     *core.CryptoKey
 	CryptoAddress     *core.CryptoAddress
-	CoinAddress       *core.CoinAddress
+	CoinAddress       core.CoinAddress
 	AbelAddress       *core.AbelAddress
 	ShortAbelAddress  *core.ShortAbelAddress
 	Fingerprint       core.Bytes

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	core "abelian.info/sdk/core"
+	core "github.com/pqabelian/abelian-sdk-go"
 )
 
 func (ds *DemoSet) DemoBasicBytes(args []string) {
@@ -69,13 +69,14 @@ func (ds *DemoSet) DemoBasicAddress(args []string) {
 	fmt.Printf("address: %v\n", address)
 	fmt.Printf("address.Validate(): %v\n", address.Validate())
 
-	ds.demoBadCase("Create a random coin address with invalid data length.")
-	coinAddress := core.NewCoinAddress(core.MakeRandomBytes(32))
-	fmt.Printf("coinAddress: %v\n", coinAddress)
-	fmt.Printf("coinAddress.Validate(): %v\n", coinAddress.Validate())
+	// invalid coin address would panic
+	//ds.demoBadCase("Create a random coin address with invalid data length.")
+	//coinAddress := core.NewCoinAddress(core.MakeRandomBytes(32))
+	//fmt.Printf("coinAddress: %v\n", coinAddress)
+	//fmt.Printf("coinAddress.Validate(): %v\n", coinAddress.Validate())
 
 	ds.demoCase("Create a valid random coin address.")
-	coinAddress = core.NewCoinAddress(core.MakeRandomBytes(core.COIN_ADDRESS_LENGTH))
+	coinAddress := core.NewCoinAddress(core.MakeRandomBytes(core.COIN_ADDRESS_LENGTH))
 	fmt.Printf("coinAddress: %v\n", coinAddress)
 
 	ds.demoCase("Create a valid random crypto address and derive other addresses.")
